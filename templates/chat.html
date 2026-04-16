@@ -157,6 +157,20 @@ $(document).ready(function () {
         if (e.which === 13) sendMessage();
     });
 
+        const toggle = document.getElementById("darkToggle");
+    const chatBody = document.getElementById("chat-body");
+    const inputBox = document.getElementById("userInput");
+
+    toggle.addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+    });
+
+    inputBox.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        sendMessage();
+      }
+    });
+
     function sendMessage() {
         var userMessage = $("#message-input").val().trim();
         if (!userMessage) return;
@@ -196,12 +210,34 @@ $(document).ready(function () {
         return typingId;
     }
 
+        function showTyping() {
+      const typingDiv = document.createElement("div");
+      typingDiv.classList.add("typing");
+      typingDiv.setAttribute("id", "typing");
+
+      typingDiv.innerHTML = `
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      `;
+
+      chatBody.appendChild(typingDiv);
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
     function removeTyping(id) {
         $("#" + id).remove();
     }
 
     function scrollToBottom() {
         $("#chat-body").scrollTop($("#chat-body")[0].scrollHeight);
+    }
+        function clearChat() {
+      chatBody.innerHTML = `
+        <div class="message bot-message">
+          Hello 👋 I'm QuickGPT. Ask me anything!
+        </div>
+      `;
     }
 });
 </script>
