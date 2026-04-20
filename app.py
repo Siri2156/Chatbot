@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 from google import genai
 from dotenv import load_dotenv
 import os
@@ -13,12 +13,30 @@ app = Flask(__name__)
 def home():
     return render_template("home.html")
 
-@app.route("/login")
+@app.route("/login", methods=["GET", "POST"])
 def login():
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+
+        # TEMP validation (replace with database later)
+        if email == "admin@gmail.com" and password == "1234":
+            return redirect(url_for("chatbot"))
+        else:
+            return "Invalid Login"
+
     return render_template("login.html")
 
-@app.route("/signup")
+@app.route("/signup", methods=["GET", "POST"])
 def signup():
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+
+        # TEMP registration (replace with database later)
+        if email and password:
+            return redirect(url_for("login"))
+
     return render_template("signup.html")
 
 @app.route("/chatbot")
