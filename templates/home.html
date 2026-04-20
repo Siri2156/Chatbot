@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QuickGPT - Home</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #0b0b16;
+      color: white;
+    }
+
+    .navbar {
+      padding: 18px 0;
+    }
+
+    .navbar-brand {
+      font-size: 22px;
+      font-weight: 800;
+      color: white !important;
+    }
+
+    .nav-link {
+      color: rgba(255,255,255,0.7) !important;
+      font-weight: 600;
+    }
+
+    .nav-link:hover {
+      color: white !important;
+    }
+
+    .btn-login {
+      border: 1px solid rgba(255,255,255,0.4);
+      color: white;
+      padding: 8px 18px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .hero {
+      padding: 80px 0;
+    }
+
+    .hero h1 {
+      font-size: 55px;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+
+    .hero p {
+      margin-top: 18px;
+      font-size: 16px;
+      color: rgba(255,255,255,0.7);
+      max-width: 500px;
+    }
+
+    .btn-main {
+      margin-top: 25px;
+      background: linear-gradient(135deg, #7a2cff, #5b6bff);
+      color: white;
+      border: none;
+      padding: 12px 22px;
+      border-radius: 12px;
+      font-weight: 700;
+    }
+
+    .btn-outline-main {
+      margin-top: 25px;
+      border: 1px solid rgba(255,255,255,0.4);
+      color: white;
+      padding: 12px 22px;
+      border-radius: 12px;
+      font-weight: 700;
+      background: transparent;
+      margin-left: 12px;
+    }
+
+    .feature-box {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 22px;
+      height: 100%;
+      transition: 0.2s;
+    }
+
+    .feature-box:hover {
+      transform: translateY(-4px);
+    }
+
+    .feature-box h5 {
+      font-weight: 800;
+      margin-top: 12px;
+    }
+
+    .feature-box p {
+      color: rgba(255,255,255,0.7);
+      font-size: 14px;
+      margin-top: 8px;
+    }
+
+    .footer {
+      padding: 30px 0;
+      margin-top: 60px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.6);
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Navbar -->
+  <div class="container">
+    <nav class="navbar navbar-expand-lg">
+      <a class="navbar-brand" href="/">QuickGPT</a>
+
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto gap-3">
+          <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+          <li class="nav-item"><a class="nav-link" href="#pricing">Pricing</a></li>
+          <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+        </ul>
+
+        <a href="/login" class="btn btn-login ms-4">Log In</a>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Hero -->
+  <div class="container hero">
+    <div class="row align-items-center">
+      <div class="col-lg-6">
+        <h1>Welcome To Easy Chat<br><span style="color:#7a2cff;">Fast Solution</span> With Our Chatbot</h1>
+
+        <p>
+          Step into a world of intelligent conversations. QuickGPT helps you generate answers,
+          solve doubts, and assist in tasks instantly.
+        </p>
+
+        <a href="/signup" class="btn btn-main">Get Started</a>
+        <a href="/chatbot" class="btn btn-outline-main">Try Chat</a>
+      </div>
+
+      <div class="col-lg-6 text-center">
+        <img src="https://cdn-icons-png.flaticon.com/512/4712/4712100.png"
+             width="380"
+             class="img-fluid"
+             alt="bot">
+      </div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <div class="container mt-5" id="features">
+    <h2 class="fw-bold mb-4">Friendly Chatbot, Quick Answers For You</h2>
+
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="feature-box">
+          <h5>⚡ Fast Responses</h5>
+          <p>Get instant AI-generated responses to any question you ask.</p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="feature-box">
+          <h5>🧠 Smart AI Assistant</h5>
+          <p>Powered by Gemini AI for better understanding and replies.</p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="feature-box">
+          <h5>🔒 Secure & Private</h5>
+          <p>Your chat data stays private and safe within your project.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="container footer text-center">
+    © 2026 QuickGPT. All Rights Reserved.
+  </div>
+
+</body>
+</html>
