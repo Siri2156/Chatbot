@@ -205,26 +205,57 @@
   <div class="main">
 
     <!-- Sidebar -->
-    <div class="sidebar">
-      <div class="brand">
-        <div class="brand-logo">Q</div>
-        <div>
-          <h3>QuickGPT</h3>
-          <small style="opacity:0.7;">AI Assistant</small>
-        </div>
+    <div class="sidebar-menu">
+      <div class="menu-item active">
+        <span class="icon">✏</span>
+        <span>New chat</span>
       </div>
 
-      <button class="new-btn" onclick="clearChat()">+ Create new</button>
-
-      <div class="menu">
-        <div class="menu-item">🏠 Home</div>
-        <div class="menu-item">📂 Saved Chats</div>
-        <div class="menu-item">📌 Dashboard</div>
-        <div class="menu-item">⚙ Settings</div>
+      <div class="menu-item">
+        <span class="icon">🔍</span>
+        <span>Search chats</span>
       </div>
 
-      <div class="upgrade-btn">Upgrade Now</div>
+      <div class="menu-item">
+        <span class="icon">📁</span>
+        <span>Projects</span>
+      </div>
+
+      <div class="menu-item">
+        <span class="icon">💻</span>
+        <span>Codex</span>
+      </div>
+
+      <div class="menu-item">
+        <span class="icon">⋯</span>
+        <span>More</span>
+      </div>
     </div>
+
+    <div class="recent-title">Recents</div>
+    <div class="recent-list">
+  {% for chat in recent_chats %}
+    <a href="/load_chat/{{chat.id}}" style="text-decoration:none;">
+      <div class="recent-item {% if active_chat_id == chat.id %}selected{% endif %}">
+        {{chat.title}}
+      </div>
+    </a>
+  {% endfor %}
+</div>
+
+    <!-- Bottom -->
+  <div class="sidebar-bottom">
+    <div class="profile">
+      <div class="avatar">TS</div>
+      <div class="profile-info">
+        <div class="name">Tula Sai Naga</div>
+        <div class="plan">Free</div>
+      </div>
+      <button class="upgrade-btn">Upgrade</button>
+    </div>
+  </div>
+
+</div>
 
     <!-- Chat Area -->
     <div class="chat-area">
