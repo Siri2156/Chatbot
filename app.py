@@ -40,17 +40,20 @@ def signup():
         if password != confirm_password:
             return "Passwords do not match!"
 
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
 
-        cursor.execute("INSERT INTO users (name, email, password) VALUES (%s, %s, %s)",
-                       (name, email, password))
+            cursor.execute("INSERT INTO users (name, email, password) VALUES (%s, %s, %s)",
+                           (name, email, password))
 
-        conn.commit()
-        cursor.close()
-        conn.close()
+            conn.commit()
+            cursor.close()
+            conn.close()
 
-        return redirect(url_for("login"))
+            return redirect(url_for("login"))
+        except mysql.connector.Error as e:
+            return f"Database error: {e}"
 
     return render_template("signup.html")
 
@@ -60,21 +63,24 @@ def login():
         email = request.form.get("email")
         password = request.form.get("password")
 
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor(dictionary=True)
 
-        cursor.execute("SELECT * FROM users WHERE email=%s AND password=%s", (email, password))
-        user = cursor.fetchone()
+            cursor.execute("SELECT * FROM users WHERE email=%s AND password=%s", (email, password))
+            user = cursor.fetchone()
 
-        cursor.close()
-        conn.close()
+            cursor.close()
+            conn.close()
 
-        if user:
-            session["user_id"] = user["id"]
-            session["user_name"] = user["name"]
-            return redirect(url_for("chatbot"))
-        else:
-            return "Invalid Email or Password!"
+            if user:
+                session["user_id"] = user["id"]
+                session["user_name"] = user["name"]
+                return redirect(url_for("chatbot"))
+            else:
+                return "Invalid Email or Password!"
+        except mysql.connector.Error as e:
+            return f"Database error: {e}"
 
     return render_template("login.html")
 
@@ -90,36 +96,39 @@ def chatbot():
 
     user_id = session["user_id"]
 
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
 
-    # Fetch recent chats
-    cursor.execute("SELECT * FROM chats WHERE user_id=%s ORDER BY created_at DESC LIMIT 10", (user_id,))
-    recent_chats = cursor.fetchall()
-
-    # If no chat exists, create one automatically
-    if len(recent_chats) == 0:
-        cursor2 = conn.cursor()
-        cursor2.execute("INSERT INTO chats (user_id, title) VALUES (%s, %s)", (user_id, "New Chat"))
-        conn.commit()
-        new_chat_id = cursor2.lastrowid
-        cursor2.close()
-
-        # Reload recent chats
+        # Fetch recent chats
         cursor.execute("SELECT * FROM chats WHERE user_id=%s ORDER BY created_at DESC LIMIT 10", (user_id,))
         recent_chats = cursor.fetchall()
+
+        # If no chat exists, create one automatically
+        if len(recent_chats) == 0:
+            cursor2 = conn.cursor()
+            cursor2.execute("INSERT INTO chats (user_id, title) VALUES (%s, %s)", (user_id, "New Chat"))
+            conn.commit()
+            new_chat_id = cursor2.lastrowid
+            cursor2.close()
+
+            # Reload recent chats
+            cursor.execute("SELECT * FROM chats WHERE user_id=%s ORDER BY created_at DESC LIMIT 10", (user_id,))
+            recent_chats = cursor.fetchall()
+
+            cursor.close()
+            conn.close()
+
+            return redirect(url_for("load_chat", chat_id=new_chat_id))
 
         cursor.close()
         conn.close()
 
-        return redirect(url_for("load_chat", chat_id=new_chat_id))
-
-    cursor.close()
-    conn.close()
-
-    # Load latest chat automatically
-    latest_chat_id = recent_chats[0]["id"]
-    return redirect(url_for("load_chat", chat_id=latest_chat_id))
+        # Load latest chat automatically
+        latest_chat_id = recent_chats[0]["id"]
+        return redirect(url_for("load_chat", chat_id=latest_chat_id))
+    except mysql.connector.Error as e:
+        return f"Database error: {e}"
 
 @app.route("/new_chat", methods=["POST"])
 def new_chat():
@@ -129,18 +138,21 @@ def new_chat():
     user_id = session["user_id"]
     title = request.json.get("title", "New Chat")
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
 
-    cursor.execute("INSERT INTO chats (user_id, title) VALUES (%s, %s)", (user_id, title))
-    conn.commit()
+        cursor.execute("INSERT INTO chats (user_id, title) VALUES (%s, %s)", (user_id, title))
+        conn.commit()
 
-    chat_id = cursor.lastrowid
+        chat_id = cursor.lastrowid
 
-    cursor.close()
-    conn.close()
+        cursor.close()
+        conn.close()
 
-    return jsonify({"chat_id": chat_id})
+        return jsonify({"chat_id": chat_id})
+    except mysql.connector.Error as e:
+        return jsonify({"error": f"Database error: {e}"}), 500
 
 @app.route("/load_chat/<int:chat_id>")
 def load_chat(chat_id):
@@ -149,29 +161,32 @@ def load_chat(chat_id):
 
     user_id = session["user_id"]
 
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("SELECT * FROM chats WHERE id=%s AND user_id=%s", (chat_id, user_id))
-    chat = cursor.fetchone()
+        cursor.execute("SELECT * FROM chats WHERE id=%s AND user_id=%s", (chat_id, user_id))
+        chat = cursor.fetchone()
 
-    if not chat:
-        return "Chat not found"
+        if not chat:
+            return "Chat not found"
 
-    cursor.execute("SELECT sender, message FROM messages WHERE chat_id=%s ORDER BY created_at ASC", (chat_id,))
-    messages = cursor.fetchall()
+        cursor.execute("SELECT sender, message FROM messages WHERE chat_id=%s ORDER BY created_at ASC", (chat_id,))
+        messages = cursor.fetchall()
 
-    cursor.execute("SELECT * FROM chats WHERE user_id=%s ORDER BY created_at DESC LIMIT 10", (user_id,))
-    recent_chats = cursor.fetchall()
+        cursor.execute("SELECT * FROM chats WHERE user_id=%s ORDER BY created_at DESC LIMIT 10", (user_id,))
+        recent_chats = cursor.fetchall()
 
-    cursor.close()
-    conn.close()
+        cursor.close()
+        conn.close()
 
-    return render_template("chat.html",
-                           username=session["user_name"],
-                           recent_chats=recent_chats,
-                           messages=messages,
-                           active_chat_id=chat_id)
+        return render_template("chat.html",
+                               username=session["user_name"],
+                               recent_chats=recent_chats,
+                               messages=messages,
+                               active_chat_id=chat_id)
+    except mysql.connector.Error as e:
+        return f"Database error: {e}"
 
 @app.route("/chat", methods=["POST"])
 def chat_endpoint():
