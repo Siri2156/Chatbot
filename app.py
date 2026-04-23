@@ -9,6 +9,10 @@ load_dotenv()
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 app = Flask(__name__)
+app.secret_key = os.getenv("GEMINI_API_KEY")
+
+if not app.secret_key:
+    raise ValueError("GEMINI_API_KEY missing in .env")
 
 def get_db_connection():
     return mysql.connector.connect(
