@@ -184,6 +184,9 @@ def chat_endpoint():
     if not user_message:
         return jsonify({"reply": "Please send a valid message."})
 
+    if not chat_id:
+        return jsonify({"reply": "No chat selected. Please create a new chat first."})
+
     # Generate AI response
     response = client.models.generate_content(
         model="gemini-flash-latest",
@@ -196,11 +199,15 @@ def chat_endpoint():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    cursor.execute("INSERT INTO messages (chat_id, sender, message) VALUES (%s, %s, %s)",
-                   (chat_id, "user", user_message))
+    cursor.execute(
+        "INSERT INTO messages (chat_id, sender, message) VALUES (%s, %s, %s)",
+        (chat_id, "user", user_message)
+    )
 
-    cursor.execute("INSERT INTO messages (chat_id, sender, message) VALUES (%s, %s, %s)",
-                   (chat_id, "bot", reply))
+    cursor.execute(
+        "INSERT INTO messages (chat_id, sender, message) VALUES (%s, %s, %s)",
+        (chat_id, "bot", reply)
+    )
 
     conn.commit()
     cursor.close()
