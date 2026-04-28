@@ -89,6 +89,10 @@ def logout():
     session.clear()
     return redirect(url_for("login"))
 
+@app.route('/favicon.ico')
+def favicon():
+    return '', 204
+
 @app.route("/chatbot")
 def chatbot():
     if "user_id" not in session:
@@ -100,35 +104,28 @@ def chatbot():
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
-        # Fetch recent chats
         cursor.execute("SELECT * FROM chats WHERE user_id=%s ORDER BY created_at DESC LIMIT 10", (user_id,))
         recent_chats = cursor.fetchall()
 
-        # If no chat exists, create one automatically
         if len(recent_chats) == 0:
-            cursor2 = conn.cursor()
-            cursor2.execute("INSERT INTO chats (user_id, title) VALUES (%s, %s)", (user_id, "New Chat"))
+            cursor.execute("INSERT INTO chats (user_id, title) VALUES (%s, %s)", (user_id, "New Chat"))
             conn.commit()
-            new_chat_id = cursor2.lastrowid
-            cursor2.close()
-
-            # Reload recent chats
-            cursor.execute("SELECT * FROM chats WHERE user_id=%s ORDER BY created_at DESC LIMIT 10", (user_id,))
-            recent_chats = cursor.fetchall()
+            new_chat_id = cursor.lastrowid
 
             cursor.close()
             conn.close()
 
             return redirect(url_for("load_chat", chat_id=new_chat_id))
 
+        latest_chat_id = recent_chats[0]["id"]
+
         cursor.close()
         conn.close()
 
-        # Load latest chat automatically
-        latest_chat_id = recent_chats[0]["id"]
         return redirect(url_for("load_chat", chat_id=latest_chat_id))
-    except mysql.connector.Error as e:
-        return f"Database error: {e}"
+
+    except Exception as e:
+        return f"ERROR in /chatbot route: {str(e)}"
 
 @app.route("/new_chat", methods=["POST"])
 def new_chat():
@@ -231,4 +228,4 @@ def chat_endpoint():
     return jsonify({"reply": reply})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000, debug=True, use_reloader=False)
+    app.run(host="0.0.0.0", port=10000, debug=True)
