@@ -339,4 +339,10 @@ def favicon():
     return '', 204
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=True, threaded=True, use_reloader=False)
+    try:
+        print("Starting Flask app...")
+        app.run(host="127.0.0.1", port=5000, debug=True, threaded=True, use_reloader=False)
+    except Exception as e:
+        print(f"ERROR: {e}")
+        import traceback
+        traceback.print_exc()
