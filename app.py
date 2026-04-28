@@ -343,10 +343,6 @@ def test_db():
     except Exception as e:
         return f"❌ MySQL Failed: {str(e)}"
 
-@app.route('/favicon.ico')
-def favicon():
-    return '', 204
-
 if __name__ == "__main__":
     try:
         print("Starting Flask app...")
