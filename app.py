@@ -52,8 +52,8 @@ def signup():
             conn.close()
 
             return redirect(url_for("login"))
-        except mysql.connector.Error as e:
-            return f"Database error: {e}"
+        except Exception as e:
+            return f"Database error: {str(e)}"
 
     return render_template("signup.html")
 
@@ -79,8 +79,8 @@ def login():
                 return redirect(url_for("chatbot"))
             else:
                 return "Invalid Email or Password!"
-        except mysql.connector.Error as e:
-            return f"Database error: {e}"
+        except Exception as e:
+            return f"Database error: {str(e)}"
 
     return render_template("login.html")
 
@@ -148,8 +148,8 @@ def new_chat():
         conn.close()
 
         return jsonify({"chat_id": chat_id})
-    except mysql.connector.Error as e:
-        return jsonify({"error": f"Database error: {e}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
 
 @app.route("/load_chat/<int:chat_id>")
 def load_chat(chat_id):
@@ -182,8 +182,8 @@ def load_chat(chat_id):
                                recent_chats=recent_chats,
                                messages=messages,
                                active_chat_id=chat_id)
-    except mysql.connector.Error as e:
-        return f"Database error: {e}"
+    except Exception as e:
+        return f"Database error: {str(e)}"
 
 @app.route("/chat", methods=["POST"])
 def chat_endpoint():
@@ -233,4 +233,4 @@ def chat_endpoint():
     return jsonify({"reply": reply})
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=True, use_reloader=False)
+    app.run(host="127.0.0.1", port=5000, debug=True)
