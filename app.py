@@ -22,11 +22,6 @@ app = Flask(__name__)
 CORS(app)
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
 
-@app.after_request
-def add_headers(response):
-    response.headers['X-Frame-Options'] = 'ALLOWALL'
-    return response
-
 def get_db_connection():
     return mysql.connector.connect(
         host="localhost",
@@ -106,12 +101,51 @@ def favicon():
 
 @app.route("/chatbot")
 def chatbot():
-    print("👉 ENTERED /chatbot")
+    try:
+        print("ENTERED CHATBOT")
 
-    if "user_id" not in session:
-        return redirect(url_for("login"))
+        if "user_id" not in session:
+            return redirect(url_for("login"))
 
-    return "Chatbot working"
+        user_id = session["user_id"]
+
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute(
+            "SELECT * FROM chats WHERE user_id=%s ORDER BY created_at DESC LIMIT 10",
+            (user_id,)
+        )
+
+        recent_chats = cursor.fetchall()
+
+        print("Recent chats:", recent_chats)
+
+        if len(recent_chats) == 0:
+            cursor.execute(
+                "INSERT INTO chats (user_id, title) VALUES (%s, %s)",
+                (user_id, "New Chat")
+            )
+
+            conn.commit()
+
+            new_chat_id = cursor.lastrowid
+
+            cursor.close()
+            conn.close()
+
+            return redirect(url_for("load_chat", chat_id=new_chat_id))
+
+        latest_chat_id = recent_chats[0]["id"]
+
+        cursor.close()
+        conn.close()
+
+        return redirect(url_for("load_chat", chat_id=latest_chat_id))
+
+    except Exception as e:
+        print("CHATBOT ERROR:", e)
+        return f"CHATBOT ERROR: {str(e)}"
 
 @app.route("/new_chat", methods=["POST"])
 def new_chat():
