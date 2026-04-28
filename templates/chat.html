@@ -356,16 +356,16 @@
   </div>
 
   <div class="sidebar-bottom">
-    <div class="profile">
-      <div class="avatar">TS</div>
-      <div class="profile-info">
-        <div class="name">{{ username }}</div>
-        <div class="plan">Free</div>
-      </div>
-      <button class="upgrade-btn">Upgrade</button>
+  <div class="profile">
+    <div class="avatar">TS</div>
+    <div class="profile-info">
+      <div class="name">{{ username }}</div>
+      <div class="plan">Free</div>
     </div>
+    <button class="upgrade-btn">Upgrade</button>
   </div>
-<a href="/logout" class="btn btn-sm btn-danger w-100 mt-2">Logout</a>
+
+  <a href="/logout" class="btn btn-sm btn-danger w-100 mt-3">Logout</a>
 </div>
 
     <!-- Chat Area -->
@@ -450,7 +450,7 @@
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
         message: msg,
-        chat_id: "{{ active_chat_id }}"
+        chat_id: parseInt("{{ active_chat_id }}")
       })
     });
 
