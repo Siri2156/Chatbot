@@ -106,7 +106,61 @@ def favicon():
 
 @app.route("/chatbot")
 def chatbot():
-    return "Chatbot route reached"
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("SELECT * FROM chats WHERE user_id=%s ORDER BY created_at DESC LIMIT 10", (user_id,))
+        recent_chats = cursor.fetchall()
+
+        if len(recent_chats) == 0:
+            cursor.execute("INSERT INTO chats (user_id, title) VALUES (%s, %s)", (user_id, "New Chat"))
+            conn.commit()
+            new_chat_id = cursor.lastrowid
+
+            cursor.close()
+            conn.close()
+
+            return redirect(url_for("load_chat", chat_id=new_chat_id))
+
+        latest_chat_id = recent_chats[0]["id"]
+
+        cursor.close()
+        conn.close()
+
+        return redirect(url_for("load_chat", chat_id=latest_chat_id))
+
+    except Exception as e:
+        return f"ERROR in /chatbot route: {str(e)}"
+
+@app.route("/new_chat", methods=["POST"])
+def new_chat():
+    if "user_id" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    user_id = session["user_id"]
+    title = request.json.get("title", "New Chat")
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("INSERT INTO chats (user_id, title) VALUES (%s, %s)", (user_id, title))
+        conn.commit()
+
+        chat_id = cursor.lastrowid
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({"chat_id": chat_id})
+    except Exception as e:
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
 
 @app.route("/load_chat/<int:chat_id>")
 def load_chat(chat_id):
