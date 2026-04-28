@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from google import genai
 from dotenv import load_dotenv
+from flask_cors import CORS
 import os
 import mysql.connector
 
@@ -15,7 +16,13 @@ if not os.getenv("FLASK_SECRET_KEY"):
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 app = Flask(__name__)
+CORS(app)
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
+
+@app.after_request
+def add_headers(response):
+    response.headers['X-Frame-Options'] = 'ALLOWALL'
+    return response
 
 def get_db_connection():
     return mysql.connector.connect(
@@ -233,4 +240,4 @@ def chat_endpoint():
     return jsonify({"reply": reply})
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    app.run(host="127.0.0.1", port=5500, debug=True)
