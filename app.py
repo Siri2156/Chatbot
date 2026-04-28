@@ -48,7 +48,7 @@ def get_db_connection():
 
 # ─── Auth Routes ────────────────────────────────────────────────────────────
 
-@app.route("/home")
+@app.route("/")
 def home():
     if "user_id" in session:
         return redirect(url_for("chatbot"))
