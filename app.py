@@ -95,10 +95,6 @@ def logout():
     session.clear()
     return redirect(url_for("login"))
 
-@app.route('/favicon.ico')
-def favicon():
-    return '', 204
-
 @app.route("/chatbot")
 def chatbot():
     try:
@@ -266,6 +262,10 @@ def chat_endpoint():
         return jsonify({"reply": f"Failed to save message. Error: {str(e)}"})
 
     return jsonify({"reply": reply})
+    
+@app.route('/favicon.ico')
+def favicon():
+    return '', 204
 
 if __name__ == "__main__":
     app.run(
