@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import os
 import mysql.connector
 
-load_dotenv()
+load_dotenv(dotenv_path=".env")
 # Create client
 if not os.getenv("GEMINI_API_KEY"):
     raise ValueError("GEMINI_API_KEY missing in .env")
