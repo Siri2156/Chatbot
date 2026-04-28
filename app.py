@@ -29,13 +29,22 @@ def add_headers(response):
     return response
 
 def get_db_connection():
-    return mysql.connector.connect(
-        host=os.getenv("DB_HOST", "localhost"),
-        user=os.getenv("DB_USER", "root"),
-        password=os.getenv("DB_PASSWORD", ""),
-        database=os.getenv("DB_NAME", "quickgpt"),
-        connection_timeout=5
-    )
+    try:
+        return mysql.connector.connect(
+            host=os.getenv("DB_HOST", "localhost"),
+            user=os.getenv("DB_USER", "root"),
+            password=os.getenv("DB_PASSWORD", ""),
+            database=os.getenv("DB_NAME", "quickgpt"),
+            connection_timeout=3,
+            autocommit=False
+        )
+    except mysql.connector.Error as e:
+        if e.errno == 2003:
+            raise Exception("❌ Cannot connect to MySQL. Is MySQL running?")
+        elif e.errno == 1049:
+            raise Exception("❌ Database 'quickgpt' not found. Run: python init_db.py")
+        else:
+            raise Exception(f"Database Error ({e.errno}): {e.msg}")
 
 # ─── Auth Routes ────────────────────────────────────────────────────────────
 
