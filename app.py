@@ -10,8 +10,8 @@ client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 app = Flask(__name__)
 
 @app.route("/")
-def home():
-    return render_template("chat.html")
+def index():
+    return render_template("home.html")
 
 @app.route("/chat", methods=["POST"])
 def chat_endpoint():
