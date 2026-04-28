@@ -32,7 +32,8 @@ def get_db_connection():
         host="localhost",
         user="root",
         password="Sridhanya@2156",
-        database="quickgpt"
+        database="quickgpt",
+        connection_timeout=5
     )
 
 @app.route("/")
