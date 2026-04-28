@@ -106,37 +106,12 @@ def favicon():
 
 @app.route("/chatbot")
 def chatbot():
+    print("👉 ENTERED /chatbot")
+
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    user_id = session["user_id"]
-
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-
-        cursor.execute("SELECT * FROM chats WHERE user_id=%s ORDER BY created_at DESC LIMIT 10", (user_id,))
-        recent_chats = cursor.fetchall()
-
-        if len(recent_chats) == 0:
-            cursor.execute("INSERT INTO chats (user_id, title) VALUES (%s, %s)", (user_id, "New Chat"))
-            conn.commit()
-            new_chat_id = cursor.lastrowid
-
-            cursor.close()
-            conn.close()
-
-            return redirect(url_for("load_chat", chat_id=new_chat_id))
-
-        latest_chat_id = recent_chats[0]["id"]
-
-        cursor.close()
-        conn.close()
-
-        return redirect(url_for("load_chat", chat_id=latest_chat_id))
-
-    except Exception as e:
-        return f"ERROR in /chatbot route: {str(e)}"
+    return "Chatbot working"
 
 @app.route("/new_chat", methods=["POST"])
 def new_chat():
@@ -218,7 +193,7 @@ def chat_endpoint():
     if not user_message:
         return jsonify({"reply": "Please send a valid message."})
 
-    if not chat_id:
+    if chat_id is None:
         return jsonify({"reply": "No chat selected. Please create a new chat first."})
 
     if client is None:
@@ -226,13 +201,14 @@ def chat_endpoint():
     else:
         # Generate AI response
         try:
-            response = client.models.generate_content(
-                model="gemini-1.5-flash-latest",
-                contents=user_message
-            )
-            reply = response.text if hasattr(response, "text") else "No response"
+           response = client.models.generate_content(
+           model="gemini-1.5-flash-latest",
+           contents=user_message
+           )
+           reply = getattr(response, "text", "No response from AI.")
         except Exception as e:
-            reply = f"Sorry, I couldn't generate a response right now. Error: {str(e)}"
+           print("Gemini Error:", e)
+           reply = "⚠️ AI is busy or unavailable. Try again."
 
     # Save messages to DB
     try:
@@ -258,4 +234,4 @@ def chat_endpoint():
     return jsonify({"reply": reply})
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=True, threaded=True, use_reloader=False)
+    app.run(debug=True)
