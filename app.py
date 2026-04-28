@@ -7,13 +7,16 @@ import mysql.connector
 
 load_dotenv(dotenv_path=".env")
 # Create client
-if not os.getenv("GEMINI_API_KEY"):
-    raise ValueError("GEMINI_API_KEY missing in .env")
+try:
+    if not os.getenv("GEMINI_API_KEY"):
+        raise ValueError("GEMINI_API_KEY missing in .env")
+    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+except Exception as e:
+    print(f"Error initializing Gemini client: {e}")
+    client = None
 
 if not os.getenv("FLASK_SECRET_KEY"):
     raise ValueError("FLASK_SECRET_KEY missing in .env")
-
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 app = Flask(__name__)
 CORS(app)
@@ -191,7 +194,18 @@ def load_chat(chat_id):
                                active_chat_id=chat_id)
     except Exception as e:
         return f"Database error: {str(e)}"
-
+@app.route("/test_db")
+def test_db():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+        return f"MySQL Connected Successfully ✅ Result = {result}"
+    except Exception as e:
+        return f"MySQL Connection Failed ❌ Error: {str(e)}"
 @app.route("/chat", methods=["POST"])
 def chat_endpoint():
     if "user_id" not in session:
@@ -206,15 +220,18 @@ def chat_endpoint():
     if not chat_id:
         return jsonify({"reply": "No chat selected. Please create a new chat first."})
 
-    # Generate AI response
-    try:
-        response = client.models.generate_content(
-            model="gemini-flash-latest",
-            contents=user_message
-        )
-        reply = response.text if hasattr(response, "text") else "No response"
-    except Exception as e:
-        reply = f"Sorry, I couldn't generate a response right now. Error: {str(e)}"
+    if client is None:
+        reply = "AI service is not available. Please check the API key."
+    else:
+        # Generate AI response
+        try:
+            response = client.models.generate_content(
+                model="gemini-flash-latest",
+                contents=user_message
+            )
+            reply = response.text if hasattr(response, "text") else "No response"
+        except Exception as e:
+            reply = f"Sorry, I couldn't generate a response right now. Error: {str(e)}"
 
     # Save messages to DB
     try:
@@ -240,4 +257,4 @@ def chat_endpoint():
     return jsonify({"reply": reply})
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5500, debug=True)
+    app.run(host="127.0.0.1", port=8000, debug=True, threaded=True, use_reloader=False)
