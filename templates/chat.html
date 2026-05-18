@@ -282,6 +282,39 @@
             min-height: 600px;
         }
     }
+    .chat-item-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 10px;
+}
+
+.chat-menu-btn {
+    border: none;
+    background: transparent;
+    color: inherit;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 4px;
+}
+
+.chat-menu-btn:hover {
+    opacity: 0.7;
+}
+
+.dropdown-menu {
+    border: none;
+    border-radius: 14px;
+    padding: 8px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+}
+
+.dropdown-item {
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+}
 </style>
 </head>
 <body>
@@ -358,16 +391,87 @@ function loadRecentChats() {
         }
 
         chats.forEach(chat => {
-            const item = $(
-                `<div class="chat-item" data-chat-id="${chat.id}" data-chat-title="${chat.title}">` +
-                `<div class="chat-item-title">${chat.title}</div>` +
-                `<div class="chat-item-meta">${new Date(chat.created_at).toLocaleString()}</div>` +
-                `</div>`
-            );
+            const item = $(`
+    <div class="chat-item"
+         data-chat-id="${chat.id}"
+         data-chat-title="${chat.title}">
+
+        <div class="chat-item-top">
+
+            <div class="chat-item-title">
+                ${chat.title}
+            </div>
+
+            <div class="dropdown">
+
+                <button
+                    class="chat-menu-btn"
+                    data-bs-toggle="dropdown">
+
+                    ⋯
+
+                </button>
+
+                <ul class="dropdown-menu dropdown-menu-end">
+
+                    <li>
+                        <a class="dropdown-item" href="#">
+                            🔗 Share
+                        </a>
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item rename-chat" href="#">
+                            ✏️ Rename
+                        </a>
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item" href="#">
+                            📌 Pin Chat
+                        </a>
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item" href="#">
+                            🗂️ Archive
+                        </a>
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item text-danger delete-chat" href="#">
+                            🗑️ Delete
+                        </a>
+                    </li>
+
+                </ul>
+
+            </div>
+
+        </div>
+
+        <div class="chat-item-meta">
+            ${new Date(chat.created_at).toLocaleString()}
+        </div>
+
+    </div>
+`);
 
             item.on("click", function() {
                 selectChat(chat.id, chat.title);
             });
+            item.find(".delete-chat").on("click", function(e) {
+
+               e.stopPropagation();
+               e.preventDefault();
+
+               if (!confirm("Delete this chat permanently?")) {
+               return;
+               }
+
+               deleteChat(chat.id);
+
+               });
 
             list.append(item);
         });
@@ -441,6 +545,22 @@ function sendMessage() {
         createNewChat();
         return;
     }
+    if (selectedChatTitle === "New Chat") {
+
+    const newTitle =
+        message.length > 30
+        ? message.substring(0, 30) + "..."
+        : message;
+
+    selectedChatTitle = newTitle;
+
+    $("#chat-title").text(newTitle);
+
+    $(`#chat-list .chat-item[data-chat-id='${selectedChatId}'] .chat-item-title`)
+        .text(newTitle);
+
+    updateChatTitle(selectedChatId, newTitle);
+}
 
     appendMessage(message, "user", true);
     $("#message-input").val("");
@@ -465,6 +585,60 @@ function sendMessage() {
             appendMessage("⚠️ Error: Could not send message.", "bot", true);
         }
     });
+}
+
+function updateChatTitle(chatId, title) {
+
+    $.ajax({
+        url: "/update-chat-title",
+        type: "POST",
+        contentType: "application/json",
+
+        data: JSON.stringify({
+            chat_id: chatId,
+            title: title
+        })
+    });
+    function deleteChat(chatId) {
+
+    $.ajax({
+        url: "/delete-chat",
+        type: "POST",
+        contentType: "application/json",
+
+        data: JSON.stringify({
+            chat_id: chatId
+        }),
+
+        success: function() {
+
+            if (selectedChatId === chatId) {
+
+                selectedChatId = null;
+                selectedChatTitle = "New Chat";
+
+                $("#chat-title").text("New Chat");
+
+                $("#chat-subtitle")
+                    .text("Start a conversation or choose a recent thread.");
+
+                $("#chat-body").html(`
+                    <div class="empty-state">
+                        Select a chat from the left or create a new one.
+                    </div>
+                `);
+            }
+
+            loadRecentChats();
+        },
+
+        error: function() {
+            alert("Unable to delete chat.");
+        }
+    });
+
+}
+
 }
 
 function appendMessage(text, sender, animate = true) {
