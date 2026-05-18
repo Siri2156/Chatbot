@@ -92,7 +92,35 @@ def create_tables():
 
 
 def setup_database():
-    init_db()
+    print("Inside setup_database()")
+
+    try:
+        print("Trying MySQL connection...")
+
+        conn = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password=""
+        )
+
+        print("MySQL connected successfully")
+
+        cursor = conn.cursor()
+
+        cursor.execute("CREATE DATABASE IF NOT EXISTS quickgpt")
+        print("Database created/check complete")
+
+        cursor.close()
+        conn.close()
+
+        print("Connection closed")
+
+    except Exception as e:
+        print("DATABASE EXCEPTION OCCURRED")
+        print(type(e))
+        print(e)
+
+    print("setup_database() finished")
 
 
 def get_current_user():
