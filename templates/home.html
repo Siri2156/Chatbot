@@ -9,11 +9,50 @@
 
   <style>
     body {
-      font-family: "Segoe UI", sans-serif;
-      background: #0b0b16;
-      color: white;
-    }
+  font-family: "Segoe UI", sans-serif;
+  color: white;
+  background:
+    radial-gradient(circle at top right,
+      rgba(122,44,255,0.25),
+      transparent 30%),
 
+    radial-gradient(circle at left center,
+      rgba(91,107,255,0.18),
+      transparent 35%),
+
+    linear-gradient(
+      135deg,
+      #070716 0%,
+      #0b0b1f 40%,
+      #11112b 100%
+    );
+
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content: "";
+  position: fixed;
+  width: 500px;
+  height: 500px;
+  background: rgba(122,44,255,0.15);
+  filter: blur(140px);
+  top: -100px;
+  right: -100px;
+  z-index: -1;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  width: 400px;
+  height: 400px;
+  background: rgba(91,107,255,0.12);
+  filter: blur(120px);
+  bottom: -100px;
+  left: -100px;
+  z-index: -1;
+}
     .navbar {
       padding: 18px 0;
     }
@@ -109,8 +148,9 @@
       border-top: 1px solid rgba(255,255,255,0.1);
       color: rgba(255,255,255,0.6);
       font-size: 14px;
+    }
 
-      .stats-section {
+    .stats-section {
   margin-top: 90px;
 }
 
@@ -199,7 +239,96 @@
 .contact-box textarea::placeholder {
   color: rgba(255,255,255,0.5);
 }
-    }
+.experience-section {
+  margin-top: 100px;
+}
+
+.stats-top {
+  background: rgba(255,255,255,0.05);
+  border-radius: 18px;
+  padding: 22px 28px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.stat-mini h3 {
+  font-size: 34px;
+  font-weight: 900;
+  margin-bottom: 5px;
+}
+
+.stat-mini span {
+  color: rgba(255,255,255,0.6);
+  font-size: 14px;
+}
+
+.experience-content h2 {
+  font-size: 46px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+.experience-box {
+  border-radius: 28px;
+  padding: 50px 0;
+  overflow: hidden;
+  position: relative;
+}
+.experience-content p {
+  margin-top: 18px;
+  color: rgba(255,255,255,0.7);
+  max-width: 550px;
+  line-height: 1.8;
+}
+
+.stats-bottom h4 {
+  font-size: 30px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.stats-bottom span {
+  color: rgba(255,255,255,0.6);
+}
+
+.bot-image {
+  width: 320px;
+  filter:
+    drop-shadow(0 0 40px rgba(122,44,255,0.5));
+  animation: floatBot 4s ease-in-out infinite;
+}
+
+@keyframes floatBot {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-12px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@media(max-width: 768px) {
+
+  .experience-box {
+    padding: 35px 25px;
+  }
+
+  .experience-content h2 {
+    font-size: 34px;
+  }
+
+  .stats-top {
+    gap: 20px;
+  }
+
+  .bot-image {
+    width: 240px;
+    margin-top: 40px;
+  }
+}
   </style>
 </head>
 
@@ -275,41 +404,90 @@
     </div>
   </div>
 
-  <!-- Stats -->
-<div class="container stats-section">
-  <div class="row g-4">
+<!-- Experience Section -->
+<div class="container experience-section">
 
-    <div class="col-md-3">
-      <div class="stat-card">
-        <h2>10K+</h2>
-        <p>Active Users</p>
-      </div>
-    </div>
+  <div class="experience-box">
 
-    <div class="col-md-3">
-      <div class="stat-card">
-        <h2>50K+</h2>
-        <p>Messages Generated</p>
-      </div>
-    </div>
+    <div class="row align-items-center">
 
-    <div class="col-md-3">
-      <div class="stat-card">
-        <h2>99%</h2>
-        <p>Accuracy</p>
-      </div>
-    </div>
+      <!-- Left Content -->
+      <div class="col-lg-7">
 
-    <div class="col-md-3">
-      <div class="stat-card">
-        <h2>24/7</h2>
-        <p>AI Assistance</p>
+        <div class="stats-top d-flex justify-content-between flex-wrap">
+
+          <div class="stat-mini">
+            <h3>5623</h3>
+            <span>Downloads</span>
+          </div>
+
+          <div class="stat-mini">
+            <h3>4523</h3>
+            <span>Likes</span>
+          </div>
+
+          <div class="stat-mini">
+            <h3>5.0</h3>
+            <span>Rating</span>
+          </div>
+
+          <div class="stat-mini">
+            <h3>200</h3>
+            <span>Awards</span>
+          </div>
+
+        </div>
+
+        <div class="experience-content mt-5">
+          <h2>
+            Beyond Text: Visual <br>
+            Experiences in Every Chat
+          </h2>
+
+          <p>
+            Immerse yourself in dynamic conversations. Our AI chatbot
+            supports visual elements such as images and videos, making
+            interactions not only textual but visually engaging.
+          </p>
+        </div>
+
+        <div class="stats-bottom d-flex gap-5 mt-4 flex-wrap">
+
+          <div>
+            <h4>10M+</h4>
+            <span>Users</span>
+          </div>
+
+          <div>
+            <h4>30K+</h4>
+            <span>Companies</span>
+          </div>
+
+          <div>
+            <h4>★ 4.7</h4>
+            <span>Rating</span>
+          </div>
+
+        </div>
+
       </div>
+
+      <!-- Right Image -->
+      <div class="col-lg-5 text-center">
+
+        <img
+          src="https://cdn-icons-png.flaticon.com/512/4712/4712100.png"
+          class="img-fluid bot-image"
+          alt="AI Bot"
+        >
+
+      </div>
+
     </div>
 
   </div>
-</div>
 
+</div>
 <!-- Pricing -->
 <div class="container pricing-section" id="pricing">
   <h2 class="fw-bold text-center mb-5">Choose Your Plan</h2>
@@ -416,7 +594,6 @@
 
   </div>
 </div>
-
   <!-- Footer -->
   <div class="container footer text-center">
     © 2026 QuickGPT. All Rights Reserved.
