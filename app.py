@@ -237,7 +237,8 @@ def logout():
 def chatbot():
     if not session.get("user_id"):
         return redirect(url_for("login"))
-    return render_template("chat.html")
+    user = get_current_user()
+    return render_template("chat.html", user=user)
 
 @app.route("/recent-chats")
 def recent_chats():
