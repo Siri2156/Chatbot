@@ -24,7 +24,6 @@ def get_db_connection(use_db=True):
         "host": DB_HOST,
         "user": DB_USER,
         "port": 3306,
-        "auth_plugin": "mysql_native_password",
         "password": DB_PASSWORD,
         "charset": "utf8mb4",
         "use_unicode": True,
