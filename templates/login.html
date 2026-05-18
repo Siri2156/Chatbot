@@ -150,6 +150,14 @@
 
     <h4 class="text-center fw-bold mb-3">Login</h4>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
     <form method="POST" action="/login">
       <div class="mb-3">
         <input type="email" class="form-control" name="email" placeholder="Email" required>
