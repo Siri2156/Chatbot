@@ -1,14 +1,127 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
+from werkzeug.security import generate_password_hash, check_password_hash
 from google import genai
 from dotenv import load_dotenv
 import os
+import mysql.connector
 
 load_dotenv()
+
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_USER = os.getenv("DB_USER", "root")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+DB_NAME = os.getenv("DB_NAME", "quickgpt")
+
 # Create client
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "change-this-secret")
+
+
+def get_db_connection(use_db=True):
+    config = {
+        "host": DB_HOST,
+        "user": DB_USER,
+        "password": DB_PASSWORD,
+        "charset": "utf8mb4",
+        "use_unicode": True,
+    }
+    if use_db:
+        config["database"] = DB_NAME
+    return mysql.connector.connect(**config)
+
+
+def init_db():
+    try:
+        conn = get_db_connection(use_db=False)
+        cursor = conn.cursor()
+        cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{DB_NAME}` DEFAULT CHARACTER SET utf8mb4")
+        cursor.close()
+        conn.close()
+    except mysql.connector.Error as err:
+        print("Database creation failed:", err)
+        return
+    create_tables()
+
+
+def create_tables():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            email VARCHAR(150) NOT NULL UNIQUE,
+            password VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS chats (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            title VARCHAR(255) NOT NULL DEFAULT 'New Chat',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+        """
+    )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS messages (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            chat_id INT NOT NULL,
+            sender ENUM('user','bot') NOT NULL,
+            message TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE
+        )
+        """
+    )
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
+@app.before_first_request
+def setup_database():
+    init_db()
+
+
+def get_current_user():
+    user_id = session.get("user_id")
+    if not user_id:
+        return None
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT id, name, email FROM users WHERE id = %s", (user_id,))
+    user = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return user
+
+
+def create_chat(user_id, title="New Chat"):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO chats (user_id, title) VALUES (%s, %s)",
+        (user_id, title),
+    )
+    chat_id = cursor.lastrowid
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return chat_id
 
 @app.route("/")
 def index():
@@ -24,7 +137,19 @@ def login():
             flash("Please enter both email and password.", "danger")
             return render_template("login.html")
 
-        # Basic login handling - accept any credentials for demo
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id, name, password FROM users WHERE email = %s", (email,))
+        user = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not user or not check_password_hash(user["password"], password):
+            flash("Invalid email or password.", "danger")
+            return render_template("login.html")
+
+        session["user_id"] = user["id"]
+        session["user_name"] = user["name"]
         flash("Login successful. Welcome back!", "success")
         return redirect(url_for("chatbot"))
 
@@ -46,33 +171,152 @@ def signup():
             flash("Passwords do not match. Please try again.", "danger")
             return render_template("signup.html")
 
-        # Basic signup handling - store no data for demo
+        hashed_password = generate_password_hash(password)
+
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO users (name, email, password) VALUES (%s, %s, %s)",
+                (name, email, hashed_password),
+            )
+            conn.commit()
+            cursor.close()
+            conn.close()
+        except mysql.connector.IntegrityError:
+            flash("This email is already registered.", "danger")
+            return render_template("signup.html")
+
         flash("Signup successful. You can now log in.", "success")
         return redirect(url_for("login"))
 
     return render_template("signup.html")
 
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("You have been logged out.", "info")
+    return redirect(url_for("login"))
+
 @app.route("/chatbot")
 def chatbot():
+    if not session.get("user_id"):
+        return redirect(url_for("login"))
     return render_template("chat.html")
+
+@app.route("/recent-chats")
+def recent_chats():
+    user = get_current_user()
+    if not user:
+        return jsonify([])
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT id, title, created_at FROM chats WHERE user_id = %s ORDER BY created_at DESC LIMIT 15",
+        (user["id"],),
+    )
+    chats = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return jsonify(chats)
+
+@app.route("/new-chat", methods=["POST"])
+def new_chat():
+    user = get_current_user()
+    if not user:
+        return jsonify({"error": "Authentication required."}), 401
+
+    title = request.json.get("title", "New Chat").strip() or "New Chat"
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO chats (user_id, title) VALUES (%s, %s)",
+        (user["id"], title),
+    )
+    chat_id = cursor.lastrowid
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({"chat_id": chat_id, "title": title})
+
+@app.route("/chat-messages/<int:chat_id>")
+def chat_messages(chat_id):
+    user = get_current_user()
+    if not user:
+        return jsonify([]), 401
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT id FROM chats WHERE id = %s AND user_id = %s",
+        (chat_id, user["id"]),
+    )
+    if not cursor.fetchone():
+        cursor.close()
+        conn.close()
+        return jsonify([]), 404
+
+    cursor.execute(
+        "SELECT sender, message, created_at FROM messages WHERE chat_id = %s ORDER BY created_at ASC",
+        (chat_id,),
+    )
+    messages = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return jsonify(messages)
 
 @app.route("/chat", methods=["POST"])
 def chat_endpoint():
+    user = get_current_user()
+    if not user:
+        return jsonify({"reply": "Authentication required."}), 401
+
     try:
         user_message = request.json.get("message", "").strip()
+        chat_id = request.json.get("chat_id")
 
         if not user_message:
             return jsonify({"reply": "Please send a valid message."})
 
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        if chat_id:
+            cursor.execute(
+                "SELECT id FROM chats WHERE id = %s AND user_id = %s",
+                (chat_id, user["id"]),
+            )
+            if not cursor.fetchone():
+                cursor.close()
+                conn.close()
+                return jsonify({"reply": "Chat not found."}), 404
+        else:
+            chat_id = create_chat(user["id"])
+
+        cursor.execute(
+            "INSERT INTO messages (chat_id, sender, message) VALUES (%s, %s, %s)",
+            (chat_id, "user", user_message),
+        )
+        conn.commit()
+
         # Generate response
         response = client.models.generate_content(
             model="gemini-flash-latest",
-            contents=user_message
+            contents=user_message,
         )
 
         reply = response.text if hasattr(response, "text") else "No response"
 
-        return jsonify({"reply": reply})
+        cursor.execute(
+            "INSERT INTO messages (chat_id, sender, message) VALUES (%s, %s, %s)",
+            (chat_id, "bot", reply),
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({"reply": reply, "chat_id": chat_id})
 
     except Exception as e:
         return jsonify({"reply": f"Error: {str(e)}"}), 500
