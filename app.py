@@ -23,13 +23,15 @@ def get_db_connection(use_db=True):
     config = {
         "host": DB_HOST,
         "user": DB_USER,
-        "port": 3306,
         "password": DB_PASSWORD,
+        "port": 3306,
         "charset": "utf8mb4",
-        "use_unicode": True,
+        "cursorclass": pymysql.cursors.DictCursor
     }
+
     if use_db:
         config["database"] = DB_NAME
+
     return pymysql.connect(**config)
 
 
@@ -171,7 +173,7 @@ def login():
             return render_template("login.html")
 
         conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor()
         cursor.execute("SELECT id, name, password FROM users WHERE email = %s", (email,))
         user = cursor.fetchone()
         cursor.close()
@@ -244,7 +246,7 @@ def recent_chats():
         return jsonify([])
 
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
     cursor.execute(
         "SELECT id, title, created_at FROM chats WHERE user_id = %s ORDER BY created_at DESC LIMIT 15",
         (user["id"],),
@@ -280,7 +282,7 @@ def chat_messages(chat_id):
         return jsonify([]), 401
 
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
     cursor.execute(
         "SELECT id FROM chats WHERE id = %s AND user_id = %s",
         (chat_id, user["id"]),
