@@ -13,6 +13,10 @@ app = Flask(__name__)
 def index():
     return render_template("home.html")
 
+@app.route("/chatbot")
+def chatbot():
+    return render_template("chat.html")
+
 @app.route("/chat", methods=["POST"])
 def chat_endpoint():
     try:
@@ -32,7 +36,7 @@ def chat_endpoint():
         return jsonify({"reply": reply})
 
     except Exception as e:
-        return jsonify({"reply": f"Error: {str(e)}"})
+        return jsonify({"reply": f"Error: {str(e)}"}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
