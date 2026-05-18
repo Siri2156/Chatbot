@@ -109,6 +109,96 @@
       border-top: 1px solid rgba(255,255,255,0.1);
       color: rgba(255,255,255,0.6);
       font-size: 14px;
+
+      .stats-section {
+  margin-top: 90px;
+}
+
+.stat-card {
+  background: rgba(255,255,255,0.05);
+  border-radius: 18px;
+  padding: 30px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.stat-card h2 {
+  font-weight: 900;
+  font-size: 38px;
+}
+
+.stat-card p {
+  color: rgba(255,255,255,0.7);
+  margin-top: 8px;
+}
+
+.pricing-section {
+  margin-top: 100px;
+}
+
+.price-card {
+  background: rgba(255,255,255,0.05);
+  border-radius: 22px;
+  padding: 35px;
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: 0.3s;
+  height: 100%;
+}
+
+.price-card:hover {
+  transform: translateY(-6px);
+}
+
+.price-card h3 {
+  font-weight: 800;
+}
+
+.price {
+  font-size: 42px;
+  font-weight: 900;
+  margin: 20px 0;
+  color: #7a2cff;
+}
+
+.price-card ul {
+  list-style: none;
+  padding: 0;
+}
+
+.price-card ul li {
+  margin-bottom: 12px;
+  color: rgba(255,255,255,0.8);
+}
+
+.contact-section {
+  margin-top: 100px;
+}
+
+.contact-box {
+  background: rgba(255,255,255,0.05);
+  border-radius: 20px;
+  padding: 35px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.contact-box input,
+.contact-box textarea {
+  background: rgba(255,255,255,0.08);
+  border: none;
+  color: white;
+}
+
+.contact-box input:focus,
+.contact-box textarea:focus {
+  background: rgba(255,255,255,0.12);
+  color: white;
+  box-shadow: none;
+}
+
+.contact-box input::placeholder,
+.contact-box textarea::placeholder {
+  color: rgba(255,255,255,0.5);
+}
     }
   </style>
 </head>
@@ -184,6 +274,148 @@
       </div>
     </div>
   </div>
+
+  <!-- Stats -->
+<div class="container stats-section">
+  <div class="row g-4">
+
+    <div class="col-md-3">
+      <div class="stat-card">
+        <h2>10K+</h2>
+        <p>Active Users</p>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="stat-card">
+        <h2>50K+</h2>
+        <p>Messages Generated</p>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="stat-card">
+        <h2>99%</h2>
+        <p>Accuracy</p>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="stat-card">
+        <h2>24/7</h2>
+        <p>AI Assistance</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Pricing -->
+<div class="container pricing-section" id="pricing">
+  <h2 class="fw-bold text-center mb-5">Choose Your Plan</h2>
+
+  <div class="row g-4">
+
+    <div class="col-md-4">
+      <div class="price-card">
+        <h3>Free</h3>
+        <div class="price">$0</div>
+
+        <ul>
+          <li>✔ Limited AI Chats</li>
+          <li>✔ Basic Support</li>
+          <li>✔ Community Access</li>
+        </ul>
+
+        <button class="btn btn-outline-main w-100">
+          Start Free
+        </button>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="price-card">
+        <h3>Pro</h3>
+        <div class="price">$19</div>
+
+        <ul>
+          <li>✔ Unlimited Chats</li>
+          <li>✔ Faster AI Responses</li>
+          <li>✔ Priority Support</li>
+          <li>✔ Chat History</li>
+        </ul>
+
+        <button class="btn btn-main w-100">
+          Get Premium
+        </button>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="price-card">
+        <h3>Enterprise</h3>
+        <div class="price">$49</div>
+
+        <ul>
+          <li>✔ Team Collaboration</li>
+          <li>✔ Advanced Analytics</li>
+          <li>✔ API Integration</li>
+          <li>✔ Dedicated Support</li>
+        </ul>
+
+        <button class="btn btn-outline-main w-100">
+          Contact Sales
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Contact -->
+<div class="container contact-section" id="contact">
+  <div class="row align-items-center">
+
+    <div class="col-lg-5 mb-4">
+      <h2 class="fw-bold">Get In Touch</h2>
+
+      <p class="text-light opacity-75 mt-3">
+        Have questions or feedback? Reach out to us anytime.
+      </p>
+
+      <div class="mt-4">
+        <p><strong>Email:</strong> support@quickgpt.ai</p>
+        <p><strong>Phone:</strong> +91 9876543210</p>
+        <p><strong>Location:</strong> Hyderabad, India</p>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="contact-box">
+
+        <form>
+          <div class="mb-3">
+            <input type="text" class="form-control p-3" placeholder="Your Name">
+          </div>
+
+          <div class="mb-3">
+            <input type="email" class="form-control p-3" placeholder="Your Email">
+          </div>
+
+          <div class="mb-3">
+            <textarea class="form-control p-3" rows="5" placeholder="Your Message"></textarea>
+          </div>
+
+          <button class="btn btn-main">
+            Send Message
+          </button>
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+</div>
 
   <!-- Footer -->
   <div class="container footer text-center">
