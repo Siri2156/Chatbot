@@ -23,6 +23,8 @@ def get_db_connection(use_db=True):
     config = {
         "host": DB_HOST,
         "user": DB_USER,
+        "port": 3306,
+        "auth_plugin": "mysql_native_password",
         "password": DB_PASSWORD,
         "charset": "utf8mb4",
         "use_unicode": True,
@@ -98,16 +100,21 @@ def setup_database():
         print("Trying MySQL connection...")
 
         conn = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password=""
+            host=DB_HOST,
+            user=DB_USER,
+            password=DB_PASSWORD,
+            port=3306,
+            auth_plugin="mysql_native_password"
         )
 
         print("MySQL connected successfully")
 
         cursor = conn.cursor()
 
-        cursor.execute("CREATE DATABASE IF NOT EXISTS quickgpt")
+        cursor.execute(
+            f"CREATE DATABASE IF NOT EXISTS `{DB_NAME}` DEFAULT CHARACTER SET utf8mb4"
+        )
+
         print("Database created/check complete")
 
         cursor.close()
@@ -115,13 +122,12 @@ def setup_database():
 
         print("Connection closed")
 
+        create_tables()
+
     except Exception as e:
         print("DATABASE EXCEPTION OCCURRED")
         print(type(e))
         print(e)
-
-    print("setup_database() finished")
-
 
 def get_current_user():
     user_id = session.get("user_id")
