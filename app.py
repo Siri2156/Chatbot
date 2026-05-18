@@ -321,11 +321,19 @@ def chat_endpoint():
         return jsonify({"reply": f"Error: {str(e)}"}), 500
 
 if __name__ == "__main__":
+    print("STEP 1")
+
     try:
-        print("Starting application...")
         setup_database()
-        print("Database connected successfully.")
-        
+        print("STEP 2")
+
+    except Exception as e:
+        print("DATABASE ERROR:")
+        print(e)
+
+    try:
+        print("STEP 3")
+
         app.run(
             host="127.0.0.1",
             port=5000,
@@ -333,4 +341,5 @@ if __name__ == "__main__":
         )
 
     except Exception as e:
-        print("Application failed:", e)
+        print("FLASK ERROR:")
+        print(e)
