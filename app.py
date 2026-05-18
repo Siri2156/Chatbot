@@ -355,6 +355,35 @@ def chat_endpoint():
 
     except Exception as e:
         return jsonify({"reply": f"Error: {str(e)}"}), 500
+    
+@app.route("/delete-chat", methods=["POST"])
+def delete_chat():
+
+    user = get_current_user()
+
+    if not user:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.json
+    chat_id = data.get("chat_id")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        DELETE FROM chats
+        WHERE id = %s AND user_id = %s
+        """,
+        (chat_id, user["id"])
+    )
+
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+
+    return jsonify({"success": True})
 
 @app.route("/update-chat-title", methods=["POST"])
 def update_chat_title():
@@ -388,34 +417,6 @@ def update_chat_title():
 
     return jsonify({"success": True})
 
-@app.route("/delete-chat", methods=["POST"])
-def delete_chat():
-
-    user = get_current_user()
-
-    if not user:
-        return jsonify({"error": "Unauthorized"}), 401
-
-    data = request.json
-    chat_id = data.get("chat_id")
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        """
-        DELETE FROM chats
-        WHERE id = %s AND user_id = %s
-        """,
-        (chat_id, user["id"])
-    )
-
-    conn.commit()
-
-    cursor.close()
-    conn.close()
-
-    return jsonify({"success": True})
 
 if __name__ == "__main__":
     print("STEP 1")

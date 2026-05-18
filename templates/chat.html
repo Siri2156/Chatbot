@@ -599,45 +599,46 @@ function updateChatTitle(chatId, title) {
             title: title
         })
     });
+
     function deleteChat(chatId) {
 
-    $.ajax({
-        url: "/delete-chat",
-        type: "POST",
-        contentType: "application/json",
+        $.ajax({
+            url: "/delete-chat",
+            type: "POST",
+            contentType: "application/json",
 
-        data: JSON.stringify({
-            chat_id: chatId
-        }),
+            data: JSON.stringify({
+                chat_id: chatId
+            }),
 
-        success: function() {
+            success: function() {
 
-            if (selectedChatId === chatId) {
+                if (selectedChatId === chatId) {
 
-                selectedChatId = null;
-                selectedChatTitle = "New Chat";
+                    selectedChatId = null;
+                    selectedChatTitle = "New Chat";
 
-                $("#chat-title").text("New Chat");
+                    $("#chat-title").text("New Chat");
 
-                $("#chat-subtitle")
-                    .text("Start a conversation or choose a recent thread.");
+                    $("#chat-subtitle")
+                        .text("Start a conversation or choose a recent thread.");
 
-                $("#chat-body").html(`
-                    <div class="empty-state">
-                        Select a chat from the left or create a new one.
-                    </div>
-                `);
+                    $("#chat-body").html(`
+                        <div class="empty-state">
+                            Select a chat from the left or create a new one.
+                        </div>
+                    `);
+                }
+
+                loadRecentChats();
+            },
+
+            error: function() {
+                alert("Unable to delete chat.");
             }
+        });
 
-            loadRecentChats();
-        },
-
-        error: function() {
-            alert("Unable to delete chat.");
-        }
-    });
-
-}
+    }
 
 }
 
