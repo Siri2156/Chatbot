@@ -91,7 +91,6 @@ def create_tables():
     conn.close()
 
 
-@app.before_first_request
 def setup_database():
     init_db()
 
@@ -322,4 +321,5 @@ def chat_endpoint():
         return jsonify({"reply": f"Error: {str(e)}"}), 500
 
 if __name__ == "__main__":
+    setup_database()
     app.run(host="0.0.0.0", port=10000)
