@@ -321,5 +321,16 @@ def chat_endpoint():
         return jsonify({"reply": f"Error: {str(e)}"}), 500
 
 if __name__ == "__main__":
-    setup_database()
-    app.run(host="0.0.0.0", port=10000)
+    try:
+        print("Starting application...")
+        setup_database()
+        print("Database connected successfully.")
+        
+        app.run(
+            host="127.0.0.1",
+            port=5000,
+            debug=True
+        )
+
+    except Exception as e:
+        print("Application failed:", e)
