@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from google import genai
 from dotenv import load_dotenv
 import os
-import mysql.connector
+import pymysql
 
 load_dotenv()
 
@@ -31,7 +31,7 @@ def get_db_connection(use_db=True):
     }
     if use_db:
         config["database"] = DB_NAME
-    return mysql.connector.connect(**config)
+    return pymysql.connect(**config)
 
 
 def init_db():
@@ -41,7 +41,7 @@ def init_db():
         cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{DB_NAME}` DEFAULT CHARACTER SET utf8mb4")
         cursor.close()
         conn.close()
-    except mysql.connector.Error as err:
+    except pymysql.Error as err:
         print("Database creation failed:", err)
         return
     create_tables()
@@ -99,12 +99,11 @@ def setup_database():
     try:
         print("Trying MySQL connection...")
 
-        conn = mysql.connector.connect(
+        conn = pymysql.connect(
             host=DB_HOST,
             user=DB_USER,
             password=DB_PASSWORD,
-            port=3306,
-            auth_plugin="mysql_native_password"
+            port=3306
         )
 
         print("MySQL connected successfully")
@@ -112,8 +111,10 @@ def setup_database():
         cursor = conn.cursor()
 
         cursor.execute(
-            f"CREATE DATABASE IF NOT EXISTS `{DB_NAME}` DEFAULT CHARACTER SET utf8mb4"
+            f"CREATE DATABASE IF NOT EXISTS `{DB_NAME}`"
         )
+
+        conn.commit()
 
         print("Database created/check complete")
 
@@ -135,7 +136,7 @@ def get_current_user():
         return None
 
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
     cursor.execute("SELECT id, name, email FROM users WHERE id = %s", (user_id,))
     user = cursor.fetchone()
     cursor.close()
@@ -216,7 +217,7 @@ def signup():
             conn.commit()
             cursor.close()
             conn.close()
-        except mysql.connector.IntegrityError:
+        except pymysql.err.IntegrityError:
             flash("This email is already registered.", "danger")
             return render_template("signup.html")
 
