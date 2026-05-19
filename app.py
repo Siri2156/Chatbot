@@ -19,23 +19,6 @@ client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "change-this-secret")
 
-# Only try to init DB if we have a proper DB connection configured
-def safe_init_db():
-    """Initialize database only if all connection parameters are available"""
-    try:
-        if not all([DB_HOST, DB_USER, DB_NAME]):
-            print("Skipping database initialization - missing connection parameters")
-            return False
-        
-        print("Attempting database initialization...")
-        init_db()
-        print("Database initialized successfully")
-        return True
-    except Exception as e:
-        print(f"Database initialization error: {type(e).__name__}: {str(e)}")
-        print("App will continue without database - queries will fail until DB is ready")
-        return False
-
 
 def get_db_connection(use_db=True):
     config = {
@@ -437,10 +420,8 @@ def update_chat_title():
     return jsonify({"success": True})
 
 
-# Initialize database when app starts (but don't crash if it fails)
-safe_init_db()
+setup_database()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
-    print(f"Starting Flask app on 0.0.0.0:{port}")
-    app.run(host="0.0.0.0", port=port, debug=False)
+    app.run(host="0.0.0.0", port=port)
