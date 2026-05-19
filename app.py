@@ -161,7 +161,7 @@ def create_chat(user_id, title="New Chat"):
 
 @app.route("/")
 def index():
-    return render_template("home.html")
+    return render_template("templates/home.html")
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -171,7 +171,7 @@ def login():
 
         if not email or not password:
             flash("Please enter both email and password.", "danger")
-            return render_template("login.html")
+            return render_template("templates/login.html")
 
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -182,14 +182,14 @@ def login():
 
         if not user or not check_password_hash(user["password"], password):
             flash("Invalid email or password.", "danger")
-            return render_template("login.html")
+            return render_template("templates/login.html")
 
         session["user_id"] = user["id"]
         session["user_name"] = user["name"]
         flash("Login successful. Welcome back!", "success")
         return redirect(url_for("chatbot"))
 
-    return render_template("login.html")
+    return render_template("templates/login.html")
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
@@ -201,11 +201,11 @@ def signup():
 
         if not name or not email or not password or not confirm_password:
             flash("All fields are required.", "danger")
-            return render_template("signup.html")
+            return render_template("templates/signup.html")
 
         if password != confirm_password:
             flash("Passwords do not match. Please try again.", "danger")
-            return render_template("signup.html")
+            return render_template("templates/signup.html")
 
         hashed_password = generate_password_hash(password)
 
@@ -221,12 +221,12 @@ def signup():
             conn.close()
         except pymysql.err.IntegrityError:
             flash("This email is already registered.", "danger")
-            return render_template("signup.html")
+            return render_template("templates/signup.html")
 
         flash("Signup successful. You can now log in.", "success")
         return redirect(url_for("login"))
 
-    return render_template("signup.html")
+    return render_template("templates/signup.html")
 
 @app.route("/logout")
 def logout():
@@ -239,7 +239,7 @@ def chatbot():
     if not session.get("user_id"):
         return redirect(url_for("login"))
     user = get_current_user()
-    return render_template("chat.html", user=user)
+    return render_template("templates/chat.html", user=user)
 
 @app.route("/recent-chats")
 def recent_chats():
