@@ -10,6 +10,7 @@ load_dotenv()
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_USER = os.getenv("DB_USER", "root")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+DB_PORT = int(os.getenv("DB_PORT", 3306))
 DB_NAME = os.getenv("DB_NAME", "quickgpt")
 
 # Create client
@@ -24,7 +25,7 @@ def get_db_connection(use_db=True):
         "host": DB_HOST,
         "user": DB_USER,
         "password": DB_PASSWORD,
-        "port": 3306,
+        "port": DB_PORT,
         "charset": "utf8mb4",
         "cursorclass": pymysql.cursors.DictCursor
     }
@@ -419,26 +420,7 @@ def update_chat_title():
     return jsonify({"success": True})
 
 
+setup_database()
+
 if __name__ == "__main__":
-    print("STEP 1")
-
-    try:
-        setup_database()
-        print("STEP 2")
-
-    except Exception as e:
-        print("DATABASE ERROR:")
-        print(e)
-
-    try:
-        print("STEP 3")
-
-        app.run(
-            host="127.0.0.1",
-            port=5000,
-            debug=True
-        )
-
-    except Exception as e:
-        print("FLASK ERROR:")
-        print(e)
+    app.run(debug=True)
