@@ -420,7 +420,8 @@ def update_chat_title():
     return jsonify({"success": True})
 
 
-setup_database()
+
 
 if __name__ == "__main__":
+    setup_database()
     app.run(debug=True)
