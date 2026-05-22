@@ -128,25 +128,6 @@ Default database name:
 quickgpt
 ```
 
----
-
-# 🔑 Environment Variables
-
-Create a `.env` file in the root directory.
-
-```env
-GEMINI_API_KEY=your_gemini_api_key
-
-FLASK_SECRET_KEY=your_secret_key
-
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=your_mysql_password
-DB_NAME=quickgpt
-```
-
----
-
 # ▶️ Run the Application
 
 ```bash
@@ -246,56 +227,10 @@ Add screenshot here:
 
 ---
 
-# 🚀 Deployment
+## 4️⃣ Deployed 🚀
 
-You can deploy this project easily on:
-
-* Render
-* Railway
-
----
-
-# 🚀 Deployment Steps
-
-## 1️⃣ Push Project to GitHub
-
-```bash
-git add .
-
-git commit -m "Initial commit"
-
-git push origin main
-```
-
----
-
-## 2️⃣ Connect GitHub Repository
-
-Connect your repository on:
-
-* Render
-* Railway
-
----
-
-## 3️⃣ Add Environment Variables
-
-```env
-GEMINI_API_KEY=your_key
-
-FLASK_SECRET_KEY=your_secret
-
-DB_HOST=your_host
-DB_USER=your_user
-DB_PASSWORD=your_password
-DB_NAME=quickgpt
-```
-
----
-
-## 4️⃣ Deploy 🚀
-
-Your AI chatbot will be live online.
+AI chatbot deployed on render
+https://chatbot-2kvj.onrender.com/
 
 ---
 
