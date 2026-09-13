@@ -306,57 +306,113 @@ def chat_messages(chat_id):
 @app.route("/chat", methods=["POST"])
 def chat_endpoint():
     user = get_current_user()
+
     if not user:
         return jsonify({"reply": "Authentication required."}), 401
 
     try:
-        user_message = request.json.get("message", "").strip()
-        chat_id = request.json.get("chat_id")
+        data = request.get_json() or {}
+
+        user_message = data.get("message", "").strip()
+        chat_id = data.get("chat_id")
 
         if not user_message:
-            return jsonify({"reply": "Please send a valid message."})
+            return jsonify({"reply": "Please send a valid message."}), 400
 
+        # -------------------------------------------------
+        # STEP 1: Validate/create chat and save user message
+        # -------------------------------------------------
         conn = get_db_connection()
         cursor = conn.cursor()
 
         if chat_id:
             cursor.execute(
-                "SELECT id FROM chats WHERE id = %s AND user_id = %s",
-                (chat_id, user["id"]),
+                """
+                SELECT id
+                FROM chats
+                WHERE id = %s AND user_id = %s
+                """,
+                (chat_id, user["id"])
             )
+
             if not cursor.fetchone():
                 cursor.close()
                 conn.close()
-                return jsonify({"reply": "Chat not found."}), 404
+
+                return jsonify({
+                    "reply": "Chat not found."
+                }), 404
+
         else:
-            chat_id = create_chat(user["id"])
+            cursor.execute(
+                """
+                INSERT INTO chats (user_id, title)
+                VALUES (%s, %s)
+                """,
+                (user["id"], "New Chat")
+            )
 
+            chat_id = cursor.lastrowid
+
+        # Save user's message
         cursor.execute(
-            "INSERT INTO messages (chat_id, sender, message) VALUES (%s, %s, %s)",
-            (chat_id, "user", user_message),
+            """
+            INSERT INTO messages (chat_id, sender, message)
+            VALUES (%s, %s, %s)
+            """,
+            (chat_id, "user", user_message)
         )
+
         conn.commit()
 
-        # Generate response
-        response = client.models.generate_content(
-            model="gemini-flash-latest",
-            contents=user_message,
-        )
-
-        reply = response.text if hasattr(response, "text") else "No response"
-
-        cursor.execute(
-            "INSERT INTO messages (chat_id, sender, message) VALUES (%s, %s, %s)",
-            (chat_id, "bot", reply),
-        )
-        conn.commit()
+        # IMPORTANT:
+        # Close database connection BEFORE calling Gemini
         cursor.close()
         conn.close()
 
-        return jsonify({"reply": reply, "chat_id": chat_id})
+        # -------------------------------------------------
+        # STEP 2: Ask Gemini
+        # -------------------------------------------------
+        response = client.models.generate_content(
+            model="gemini-flash-latest",
+            contents=user_message
+        )
+
+        reply = response.text if response.text else "No response received."
+
+        # -------------------------------------------------
+        # STEP 3: Save Gemini response using a NEW connection
+        # -------------------------------------------------
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO messages (chat_id, sender, message)
+            VALUES (%s, %s, %s)
+            """,
+            (chat_id, "bot", reply)
+        )
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            "reply": reply,
+            "chat_id": chat_id
+        })
 
     except Exception as e:
-        return jsonify({"reply": f"Error: {str(e)}"}), 500
+        print("========== CHAT ERROR ==========")
+        print(type(e).__name__)
+        print(str(e))
+        print("================================")
+
+        return jsonify({
+            "reply": f"Error: {str(e)}"
+        }), 500
     
 @app.route("/delete-chat", methods=["POST"])
 def delete_chat():
