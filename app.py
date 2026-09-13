@@ -4,6 +4,7 @@ from google import genai
 from dotenv import load_dotenv
 import os
 import pymysql
+import time
 
 load_dotenv()
 
@@ -317,7 +318,9 @@ def chat_endpoint():
         chat_id = data.get("chat_id")
 
         if not user_message:
-            return jsonify({"reply": "Please send a valid message."}), 400
+            return jsonify({
+                "reply": "Please send a valid message."
+            }), 400
 
         # -------------------------------------------------
         # STEP 1: Validate/create chat and save user message
@@ -365,23 +368,37 @@ def chat_endpoint():
 
         conn.commit()
 
-        # IMPORTANT:
-        # Close database connection BEFORE calling Gemini
+        # Close database before calling Gemini
         cursor.close()
         conn.close()
 
         # -------------------------------------------------
-        # STEP 2: Ask Gemini
+        # STEP 2: Ask Gemini with retry
         # -------------------------------------------------
-        response = client.models.generate_content(
-            model="gemini-flash-latest",
-            contents=user_message
-        )
+        reply = None
 
-        reply = response.text if response.text else "No response received."
+        for attempt in range(3):
+            try:
+                response = client.models.generate_content(
+                    model="gemini-flash-latest",
+                    contents=user_message
+                )
+
+                reply = response.text if response.text else "No response received."
+                break
+
+            except Exception as gemini_error:
+                print(f"Gemini attempt {attempt + 1} failed:")
+                print(type(gemini_error).__name__)
+                print(str(gemini_error))
+
+                if attempt < 2:
+                    time.sleep(3)
+                else:
+                    raise gemini_error
 
         # -------------------------------------------------
-        # STEP 3: Save Gemini response using a NEW connection
+        # STEP 3: Save Gemini response using new connection
         # -------------------------------------------------
         conn = get_db_connection()
         cursor = conn.cursor()
