@@ -5,13 +5,16 @@ from dotenv import load_dotenv
 import os
 import pymysql
 
-load_dotenv()
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_USER = os.getenv("DB_USER", "root")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 DB_PORT = int(os.getenv("DB_PORT") or 3306)
 DB_NAME = os.getenv("DB_NAME", "quickgpt")
+
+USE_AIVEN = os.getenv("USE_AIVEN", "false").lower() == "true"
 
 # Create client
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
@@ -21,20 +24,45 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "change-this-secret")
 
 
 def get_db_connection(use_db=True):
+
     config = {
         "host": DB_HOST,
         "user": DB_USER,
         "password": DB_PASSWORD,
         "port": DB_PORT,
         "charset": "utf8mb4",
-        "cursorclass": pymysql.cursors.DictCursor
+        "cursorclass": pymysql.cursors.DictCursor,
+
+        # Connection timeouts
+        "connect_timeout": 15,
+        "read_timeout": 30,
+        "write_timeout": 30
     }
+
+    # -----------------------------------------------------
+    # AIVEN ONLY
+    # -----------------------------------------------------
+    #
+    # Local MySQL does not need this.
+    # Aiven requires SSL.
+    #
+    if USE_AIVEN:
+
+        config["ssl"] = {
+            "ca": os.path.join(
+                BASE_DIR,
+                "aiven-ca.pem"
+            )
+        }
+
+    # -----------------------------------------------------
+    # DATABASE NAME
+    # -----------------------------------------------------
 
     if use_db:
         config["database"] = DB_NAME
 
     return pymysql.connect(**config)
-
 
 def init_db():
     try:
@@ -99,37 +127,29 @@ def setup_database():
     print("Inside setup_database()")
 
     try:
-        print("Trying MySQL connection...")
+        print("Trying Aiven MySQL connection...")
 
-        conn = pymysql.connect(
-            host=DB_HOST,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            port=DB_PORT
-        )
+        conn = get_db_connection()
 
         print("MySQL connected successfully")
 
         cursor = conn.cursor()
 
-        cursor.execute(
-            f"CREATE DATABASE IF NOT EXISTS `{DB_NAME}`"
-        )
+        cursor.execute("SELECT DATABASE()")
+        database = cursor.fetchone()
 
-        conn.commit()
-
-        print("Database created/check complete")
+        print("Connected database:", database)
 
         cursor.close()
         conn.close()
 
-        print("Connection closed")
-
         create_tables()
+
+        print("Tables created/check complete")
 
     except Exception as e:
         print("DATABASE EXCEPTION OCCURRED")
-        print(type(e))
+        print(type(e).__name__)
         print(e)
 
 def get_current_user():
@@ -306,57 +326,137 @@ def chat_messages(chat_id):
 @app.route("/chat", methods=["POST"])
 def chat_endpoint():
     user = get_current_user()
+
     if not user:
         return jsonify({"reply": "Authentication required."}), 401
 
     try:
-        user_message = request.json.get("message", "").strip()
-        chat_id = request.json.get("chat_id")
+        data = request.get_json(silent=True) or {}
+
+        user_message = data.get("message", "").strip()
+        chat_id = data.get("chat_id")
 
         if not user_message:
-            return jsonify({"reply": "Please send a valid message."})
+            return jsonify({"reply": "Please send a valid message."}), 400
+
+        # -------------------------------------------------
+        # 1. Make sure we have a valid chat
+        # -------------------------------------------------
+
+        if chat_id:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                SELECT id
+                FROM chats
+                WHERE id = %s AND user_id = %s
+                """,
+                (chat_id, user["id"])
+            )
+
+            chat = cursor.fetchone()
+
+            cursor.close()
+            conn.close()
+
+            if not chat:
+                return jsonify({"reply": "Chat not found."}), 404
+
+        else:
+            chat_id = create_chat(user["id"])
+
+        # -------------------------------------------------
+        # 2. Save user's message
+        # -------------------------------------------------
 
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        if chat_id:
-            cursor.execute(
-                "SELECT id FROM chats WHERE id = %s AND user_id = %s",
-                (chat_id, user["id"]),
-            )
-            if not cursor.fetchone():
-                cursor.close()
-                conn.close()
-                return jsonify({"reply": "Chat not found."}), 404
-        else:
-            chat_id = create_chat(user["id"])
-
         cursor.execute(
-            "INSERT INTO messages (chat_id, sender, message) VALUES (%s, %s, %s)",
-            (chat_id, "user", user_message),
+            """
+            INSERT INTO messages
+            (chat_id, sender, message)
+            VALUES (%s, %s, %s)
+            """,
+            (chat_id, "user", user_message)
         )
+
         conn.commit()
 
-        # Generate response
-        response = client.models.generate_content(
-            model="gemini-flash-latest",
-            contents=user_message,
-        )
-
-        reply = response.text if hasattr(response, "text") else "No response"
-
-        cursor.execute(
-            "INSERT INTO messages (chat_id, sender, message) VALUES (%s, %s, %s)",
-            (chat_id, "bot", reply),
-        )
-        conn.commit()
         cursor.close()
         conn.close()
 
-        return jsonify({"reply": reply, "chat_id": chat_id})
+        # -------------------------------------------------
+        # 3. Ask Gemini
+        # -------------------------------------------------
+
+        try:
+            response = client.models.generate_content(
+                model="gemini-3.6-flash",
+                contents=user_message
+            )
+
+            reply = getattr(response, "text", None)
+
+            if not reply:
+                reply = "Sorry, I couldn't generate a response."
+
+        except Exception as gemini_error:
+            print("======================================")
+            print("GEMINI ERROR")
+            print("======================================")
+            print(type(gemini_error).__name__)
+            print(str(gemini_error))
+            print("======================================")
+
+            return jsonify({
+                "reply": "Sorry, I couldn't connect to the AI service right now."
+            }), 500
+
+        # -------------------------------------------------
+        # 4. Save Gemini's response
+        # -------------------------------------------------
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            INSERT INTO messages
+            (chat_id, sender, message)
+            VALUES (%s, %s, %s)
+            """,
+            (chat_id, "bot", reply)
+        )
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        # -------------------------------------------------
+        # 5. Send response to frontend
+        # -------------------------------------------------
+
+        return jsonify({
+            "reply": reply,
+            "chat_id": chat_id
+        })
 
     except Exception as e:
-        return jsonify({"reply": f"Error: {str(e)}"}), 500
+
+        print("======================================")
+        print("CHAT ERROR")
+        print("======================================")
+        print(type(e).__name__)
+        print(str(e))
+        print("======================================")
+
+        return jsonify({
+            "reply": f"Error: {str(e)}"
+        }), 500
     
 @app.route("/delete-chat", methods=["POST"])
 def delete_chat():
